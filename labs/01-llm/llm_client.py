@@ -53,7 +53,33 @@ class LLMClient:
         #   - completion.model                       → model
         #   - completion.choices[0].finish_reason    → finish_reason
         #   - completion.usage.prompt_tokens / completion_tokens
-        raise NotImplementedError("Completa LLMClient.chat")
+        params = {
+            "model": self.settings.model,
+            "messages": messages,
+            "temperature": self.settings.temperature if temperature is None else temperature,
+            "max_tokens": self.settings.max_tokens if max_tokens is None else max_tokens,
+        }
+        if json_mode:
+            params["response_format"] = {"type": "json_object"}
+
+        try:
+            completion = self._client.chat.completions.create(**params)
+        except openai.APIError as exc:
+            message = f"No se pudo completar la solicitud a {self.settings.provider}: {exc}"
+            raise LLMError(message) from exc
+
+        # Algunos proveedores (p. ej. OpenRouter) pueden responder con un error y sin "choices".
+        if not completion.choices:
+            raise LLMError(f"{self.settings.provider} devolvió una respuesta vacía.")
+
+        choice = completion.choices[0]
+        return LLMResponse(
+            text=choice.message.content or "",
+            model=completion.model,
+            finish_reason=choice.finish_reason,
+            prompt_tokens=completion.usage.prompt_tokens,
+            completion_tokens=completion.usage.completion_tokens,
+        )
 
 
 if __name__ == "__main__":
