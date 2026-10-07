@@ -57,7 +57,10 @@ class VectorStore:
         #     self._vectors @ q calcula en una sola operación el puntaje de TODOS los fragmentos.
         #   - Ordena los índices de mayor a menor puntaje (np.argsort) y toma los k primeros.
         #   - Devuelve un SearchResult(chunk, score) por cada uno (score como float de Python).
-        raise NotImplementedError("Completa VectorStore.search")
+        q = normalize(np.asarray(query_vector, dtype=np.float32))
+        scores = self._vectors @ q
+        top = np.argsort(scores)[::-1][:k]
+        return [SearchResult(chunk=self.chunks[i], score=float(scores[i])) for i in top]
 
     def save(self, index_dir: Path) -> None:
         index_dir.mkdir(parents=True, exist_ok=True)

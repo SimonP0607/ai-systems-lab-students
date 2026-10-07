@@ -43,7 +43,14 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
     #   - Detente cuando una ventana llegue al final del texto (sin ventanas repetidas al final).
     #   - Un texto vacío produce una lista vacía.
     # Pruébalo con: uv run python labs/02-rag/documents.py
-    raise NotImplementedError("Completa chunk_text")
+    words = text.split()
+    step = chunk_size - overlap
+    chunks = []
+    for start in range(0, len(words), step):
+        chunks.append(" ".join(words[start:start + chunk_size]))
+        if start + chunk_size >= len(words):
+            break
+    return chunks
 
 
 def chunk_documents(documents: list[Document], chunk_size: int, overlap: int) -> list[Chunk]:

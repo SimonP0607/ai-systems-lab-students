@@ -33,7 +33,12 @@ def format_context(results: list[SearchResult]) -> str:
     #   - Si hay, un bloque por fragmento, numerado desde 1 y separado por una línea en blanco:
     #       [1] (evaluacion.md) El primer parcial se realizará...
     #       [2] (anuncios.md) Por la jornada institucional...
-    raise NotImplementedError("Completa format_context")
+    if not results:
+        return NO_CONTEXT
+    return "\n\n".join(
+        f"[{i}] ({result.chunk.source}) {result.chunk.text}"
+        for i, result in enumerate(results, start=1)
+    )
 
 
 class CourseRAG:
@@ -57,7 +62,7 @@ class CourseRAG:
         # TODO 6: descarta los resultados con score menor que self.min_score.
         #   Antes de completarlo, pregunta algo sin relación con el curso en --debug y observa
         #   qué fragmentos recibe el LLM. Elige el umbral con search.py (Paso 6 de la guía).
-        return results
+        return [result for result in results if result.score >= self.min_score]
 
     def answer(self, question: str, history: list[Message] | None = None) -> RAGAnswer:
         sources = self.retrieve(question)
